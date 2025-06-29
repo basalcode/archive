@@ -1,0 +1,92 @@
+/// ========================================
+/// JOURNAL MODELS
+/// ========================================
+
+/// 일일 트레이딩 일지
+/// 하루 단위로 시장 분석, 전략 계획, 복기 등을 종합적으로 기록
+model Journal {
+  id Int @id @default(autoincrement()) // 고유식별자
+  date DateTime // 일지 작성 대상 날짜 (매매 기준)
+  created_at DateTime @default(now()) // 생성 시각 (기록 시작 시점)
+  updated_at DateTime @updatedAt // 최종 수정 시각
+  deleted_at DateTime? // Soft delete 시각 (null이면 활성 상태)
+
+  // Relations
+  journal_items JournalItem[]
+
+  @@index([date])
+  @@index([deleted_at])
+  @@index([created_at])
+}
+
+/// 트레이딩 일지의 핵심 구성 요소
+/// 시황 분석, 전략 평가, 복기, 인사이트 등 다양한 기록 유형을 추상화
+/// 하나의 Journal에 여러 JournalItem이 종속됨
+model JournalItem {
+  id Int @id @default(autoincrement()) // 고유식별자
+  journal_id Int // 소속된 Journal의 고유 ID (1일치 일지와 연결)
+  type JournalItemType // 기록 유형 (예: Overview: 시황 개요, Review: 사후 복기, Scenario: 매매 시나리오 등)
+  title String @default("") // JournalItem의 제목 또는 간략한 개요
+  highlight ScoreType // 중요도 또는 핵심성 평가 (VeryHigh ~ VeryLow)
+  created_at DateTime @default(now()) // 생성 시각
+  updated_at DateTime @updatedAt // 최종 수정 시각
+  deleted_at DateTime? // Soft delete 시각 (null이면 활성 상태)
+
+  // Relations
+  journal Journal @relation(fields: [journal_id], references: [id])
+  
+  // JournalItemResource relations
+  journal_item_resources JournalItemResource[]
+
+  // AssetRiskManagement relations
+  asset_risk_managements AssetRiskManagement[]
+  
+  // Overview relations
+  overview Overview?
+  
+  // TradingStrategy relations
+  trading_strategies TradingStrategy[]
+  
+  // Scenario relations
+  scenarios Scenario[]
+
+  // Trading relations
+  tradings Trading[]
+  
+  // PrincipleEvaluation relations
+  principle_evaluations PrincipleEvaluation[]
+  
+  // Note relations
+  notes Note[]
+  
+  // Review relations (as reviewer)
+  reviews_as_reviewer Review[] @relation("Reviewer")
+  
+  // Review relations (as target)
+  reviews_as_target Review[] @relation("Target")
+
+  @@index([journal_id])
+  @@index([type])
+  @@index([highlight])
+  @@index([created_at])
+  @@index([deleted_at])
+}
+
+/// JournalItem와 Resource를 연결하는 다대다 관계 테이블
+/// 하나의 복기 JournalItem에서 여러 자료를 참조하거나 공유하는 구조를 표현
+model JournalItemResource {
+  id Int @id @default(autoincrement()) // 고유식별자
+  journal_item_id Int // JournalItem 참조 (자료를 활용한 복기 기록)
+  resource_id Int // Resource 참조 (참조된 자료)
+  created_at DateTime @default(now()) // 연결이 생성된 시각
+  deleted_at DateTime? // Soft delete 시각 (null이면 활성 상태)
+
+  // Relations
+  journal_item JournalItem @relation(fields: [journal_item_id], references: [id])
+  resource Resource @relation(fields: [resource_id], references: [id])
+
+  @@index([journal_item_id])
+  @@index([resource_id])
+  @@index([created_at])
+  @@index([deleted_at])
+}

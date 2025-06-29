@@ -1,0 +1,41 @@
+/// ========================================
+/// TRADING PRINCIPLE MODELS
+/// ========================================
+
+/// 트레이딩 원칙 정의
+/// 사용자의 사고 판단 기준을 정의하여 복기 기록 중 판단의 일관성, 
+/// 전략적 사고의 적합성 등을 평가하기 위한 기준 항목을 저장
+/// Preference를 기반으로 구성
+model Principle {
+  id Int @id @default(autoincrement()) // 고유식별자
+  preference_id Int // Preference 참조 (이 원칙이 소속된 사용자 기준)
+  evaluation_criteria String @default("") // 판단의 기준 문장 또는 체크리스트 형식의 항목 설명
+
+  // Relations
+  preference Preference @relation(fields: [preference_id], references: [id])
+  
+  // PrincipleEvaluation relations
+  principle_evaluations PrincipleEvaluation[]
+
+  @@index([preference_id])
+}
+
+/// 트레이딩 원칙 평가 기록
+/// 복기 기록(JournalItem)에 대해 특정 Principle을 기준으로 
+/// 판단의 적절성을 평가한 기록
+/// 사고 기준이 얼마나 충족되었는지를 수치화하여 개선점 도출
+model PrincipleEvaluation {
+  id Int @id @default(autoincrement()) // 고유식별자
+  journal_item_id Int // JournalItem 참조 (이 평가가 기록된 복기 JournalItem)
+  principle_id Int // Principle 참조 (기준이 된 사고 원칙)
+  score ScoreType // 해당 시점에서 이 원칙이 얼마나 충족되었는지에 대한 평가 점수
+  score_reason String @default("") // 점수에 대한 이유
+
+  // Relations
+  journal_item JournalItem @relation(fields: [journal_item_id], references: [id])
+  principle Principle @relation(fields: [principle_id], references: [id])
+
+  @@index([journal_item_id])
+  @@index([principle_id])
+  @@index([score])
+} 

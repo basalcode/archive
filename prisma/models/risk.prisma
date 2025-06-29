@@ -1,0 +1,118 @@
+/// ========================================
+/// RISK MANAGEMENT MODELS
+/// ========================================
+
+/// 사용자 설정 메타데이터
+/// 사용자가 정의한 기준, 전략, 리스크 정책 등을 관리하기 위한 상위 메타 테이블
+/// Principle, Strategy, RiskManagement 등의 기반으로 사용
+model Preference {
+  id Int @id @default(autoincrement()) // 고유식별자
+  type PreferenceType // 사용자가 정의한 기준들의 유형(Principle, Strategy, RiskManagement)
+  title String @default("") // 기준 또는 전략의 명칭
+  description String @default("") // 기준 또는 전략에 대한 설명
+  importance ScoreType // 중요도 평가 점수 (VeryHigh ~ VeryLow)
+  is_valid Boolean // 현재 유효한 기준인지 여부 (true: 사용 중)
+  created_at DateTime @default(now()) // 생성 시각
+  updated_at DateTime @updatedAt // 최종 수정 시각
+
+  // Relations
+  strategies Strategy[]
+  
+  risk_managements RiskManagement[]
+  
+  position_risk_managements PositionRiskManagement[]
+  
+  principles Principle[]
+
+  @@index([type])
+  @@index([is_valid])
+  @@index([created_at])
+}
+
+/// 자산 전체 리스크 정책
+/// 자산 전체 또는 계좌 단위의 전반적인 리스크 정책을 정의
+/// 손실률 제한, 수익률 목표, 유보금 제한을 설정하여 자산 보호
+model RiskManagement {
+  id Int @id @default(autoincrement()) // 고유식별자
+  preference_id Int // Preference 참조 (사용자 정의 리스크 기준)
+  max_loss_rate Float // 허용되는 최대 손실률 (예: 0.05는 -5%) - 비율이므로 Float 사용
+  min_profit_rate Float // 달성하고자 하는 최소 수익률 (예: 0.02는 +2%) - 비율이므로 Float 사용
+  max_reserved_funds_rate Float // 총 자산 중 유보금이 차지할 수 있는 최대 비중 - 비율이므로 Float 사용
+
+  // Relations
+  preference Preference @relation(fields: [preference_id], references: [id])
+  
+  // AssetRiskManagement relations
+  asset_risk_managements AssetRiskManagement[]
+  
+  // AccountRiskManagement relations
+  account_risk_managements AccountRiskManagement[]
+
+  @@index([preference_id])
+}
+
+/// 개별 포지션 리스크 제한
+/// 개별 포지션 단위의 리스크 제한을 정의
+/// 포지션당 리스크 비중, 마진 크기, 손실 한도 등을 관리하여 포지션별 위험 통제
+model PositionRiskManagement {
+  id Int @id @default(autoincrement()) // 고유식별자
+  preference_id Int // Preference 참조 (사용자 정의 리스크 기준)
+  max_risk_per_position Float // 한 포지션에 허용되는 최대 리스크 비중 (0.0 ~ 1.0) - 비율이므로 Float 사용
+  capital_partition_count Int // 전체 시드를 분할할 기준 수 (예: 5라면 5등분)
+  margin_per_position String // 포지션당 투입하는 마진 금액 - 부동소수점 오차 방지를 위해 문자열로 저장
+  max_drawdown_per_position String // 포지션당 허용되는 최대 손실 한도 (금액 또는 비율) - 부동소수점 오차 방지를 위해 문자열로 저장
+
+  // Relations
+  preference Preference @relation(fields: [preference_id], references: [id])
+  
+  // AccountRiskManagement relations
+  account_risk_managements AccountRiskManagement[]
+
+  @@index([preference_id])
+}
+
+/// 자산 리스크 정책 연결
+/// 하나의 복기 JournalItem에서 자산 단위 리스크 정책을 명시적으로 연결
+/// 복기 기반의 전략별 리스크 구성 기록으로 사용
+model AssetRiskManagement {
+  id Int @id @default(autoincrement()) // 고유식별자
+  journal_item_id Int // JournalItem 참조 (복기 기록)
+  risk_management_id Int // RiskManagement 참조 (적용된 자산 리스크 정책)
+
+  // Relations
+  journal_item JournalItem @relation(fields: [journal_item_id], references: [id])
+  risk_management RiskManagement @relation(fields: [risk_management_id], references: [id])
+  
+  // AccountRiskManagement relations
+  account_risk_managements AccountRiskManagement[]
+
+  @@index([journal_item_id])
+  @@index([risk_management_id])
+}
+
+/// 계좌별 통합 리스크 관리
+/// 특정 계좌에 적용된 자산 리스크, 계좌 리스크, 포지션 리스크 기준을 통합적으로 관리
+/// 구성에 대한 평가 점수도 기록하여 리스크 관리 효율성 분석
+/// Account가 삭제되면 연관된 모든 AccountRiskManagement도 Soft Delete됨
+model AccountRiskManagement {
+  id Int @id @default(autoincrement()) // 고유식별자
+  asset_risk_management_id Int // AssetRiskManagement 참조 (자산 리스크 전략)
+  account_id Int // Account 참조 (해당 계좌)
+  risk_management_id Int // RiskManagement 참조 (계좌 리스크 기준)
+  position_risk_management_id Int // PositionRiskManagement 참조 (포지션 리스크 기준)
+  created_at DateTime @default(now()) // 생성 시각
+  updated_at DateTime @updatedAt // 최종 수정 시각
+  deleted_at DateTime? // Soft delete 시각 (null이면 활성 상태)
+
+  // Relations
+  asset_risk_management AssetRiskManagement @relation(fields: [asset_risk_management_id], references: [id])
+  account Account @relation(fields: [account_id], references: [id])
+  risk_management RiskManagement @relation(fields: [risk_management_id], references: [id])
+  position_risk_management PositionRiskManagement @relation(fields: [position_risk_management_id], references: [id])
+
+  @@index([asset_risk_management_id])
+  @@index([account_id])
+  @@index([risk_management_id])
+  @@index([position_risk_management_id])
+  @@index([deleted_at])
+}

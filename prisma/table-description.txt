@@ -1,0 +1,489 @@
+Enum JournalItemType {
+  Overview [note: '시황 분석을 요약한 JournalItem']
+  AssetRiskManagement [note: '자산 리스크 정책 JournalItem']
+  TradingStrategy [note: '전략 관찰 기록 JournalItem']
+  Scenario [note: '매매 시나리오 작성 JournalItem']
+  PrincipleEvaluation [note: '사고 기준에 대한 평가 JournalItem']
+  Note [note: '외부 정보 및 아이디어 기록 JournalItem']
+  Review [note: '기록에 대한 복기 및 반성 JournalItem']
+}
+
+Enum ExchangeType {
+  Binance
+  Bybit
+  Bitget
+  OKX
+  UPbit
+  Bithumb
+}
+
+Enum CurrencyType {
+  USDT
+  USDC
+  KRW
+}
+
+Enum PositionDirectionType {
+  Long [note: '매수 포지션']
+  Short [note: '매도 포지션']
+}
+
+Enum MarketTrendType {
+  VeryBullish [note: '강한 상승 추세']
+  Bullish [note: '상승 추세']
+  Crabish [note: '횡보 또는 중립 상태']
+  Bearish [note: '하락 추세']
+  VeryBearish [note: '강한 하락 추세']
+}
+
+Enum ScoreType {
+  VeryHigh [note: '매우 높음']
+  High
+  Medium
+  Low
+  VeryLow [note: '매우 낮음']
+}
+
+Enum TimeIntervalType {
+  1m [note: '1분']
+  2m [note: '2분']
+  3m [note: '3분']
+  5m [note: '5분']
+  10m [note: '10분']
+  15m [note: '15분']
+  30m [note: '30분']
+  45m [note: '45분']
+  1h [note: '1시간']
+  2h [note: '2시간']
+  3h [note: '3시간']
+  4h [note: '4시간']
+  12h [note: '12시간']
+  1d [note: '1일']
+  1w [note: '1주']
+  1M [note: '1개월']
+  3M [note: '3개월']
+  6M [note: '6개월']
+  12M [note: '12개월']
+}
+
+Enum TradeTimeFrameType {
+  Scalp [note: '초단타 (Scalping)']
+  Day [note: '데이 트레이딩']
+  Swing [note: '스윙 트레이딩']
+  Position [note: '포지션 트레이딩']
+  Investment [note: '장기 투자']
+}
+
+Enum StrategyBiasType {
+  FollowTrend [note: '추세 추종 전략']
+  CounterTrend [note: '역추세 전략']
+}
+
+Enum OrderType {
+  Open [note: '진입 주문']
+  Close [note: '청산 주문']
+}
+
+Enum ResourceType {
+  Image [note: '이미지 자료']
+  Video [note: '동영상 자료']
+  Audio [note: '음성 자료']
+  Document [note: '문서 자료']
+}
+
+Enum ScenarioType {
+  Entry [note: '진입 시나리오']
+  Exit [note: '청산 시나리오']
+}
+
+Enum TransactionType {
+  Deposit [note: '입금']
+  Withdrawal [note: '출금']
+  Order [note: '주문에 따른 잔고 변동']
+}
+
+Enum NoteType {
+  Book [note: '책, 논문, 리서치 등 깊이 있는 자료']
+  Web [note: '블로그, 뉴스, 소셜미디어 등 온라인 자료']
+  Idea [note: '개인적인 아이디어, 깨달음, 직감 등']
+}
+
+Enum EventType {
+  News [note: '뉴스 이벤트']
+  Policy [note: '정책 발표']
+  SocialMedia [note: '소셜 미디어 언급']
+}
+
+Enum PreferenceType {
+  Strategy
+  RiskManagement
+  Principle
+}
+
+Table Account {
+  note: '사용자 계좌 정보를 담고 있는 테이블. Soft delete 기능을 통해 계좌 삭제 시에도 기존 주문 내역과의 관계를 유지한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  exchange ExchangeType [ not null, note: '거래소명' ]
+  name string [ not null, unique, note: '계좌명' ]
+  description string [ not null, note: '계좌설명' ]
+  currency CurrencyType [ not null, note: '통화 단위 (USDT, USDC, KRW 등)' ]
+  is_active boolean [ not null, note: '유효한 계좌인지 여부' ]
+  is_virtual boolean [ not null, note: '가상 계좌인지 여부' ]
+  created_at Date [ not null, note: '생성 시각' ]
+  updated_at Date [ not null, note: '최종 수정 시각' ]
+  deleted_at Date [ note: 'Soft delete 시각 (null이면 활성 상태)' ]
+}
+
+Table Journal {
+  note: '하루 단위의 트레이딩 복기 일지. 다양한 유형의 JournalItem들을 포함하며, 해당 날짜의 시장 분석, 전략 계획, 복기 등을 종합적으로 기록한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  date Date [ not null, note: '일지 작성 대상 날짜 (매매 기준)' ]
+  created_at Date [ not null, note: '생성 시각 (기록 시작 시점)' ]
+  updated_at Date [ not null, note: '최종 수정 시각' ]
+  deleted_at Date [ note: 'Soft delete 시각 (null이면 활성 상태)' ]
+}
+
+Table JournalItem {
+  note: '트레이딩 복기 시스템의 핵심 단위로, 시황 분석, 전략 평가, 복기, 인사이트 등 다양한 기록 유형을 추상화한 테이블. 하나의 Journal에 여러 JournalItem가 종속된다.'
+  id number [ pk, not null, note: '고유식별자' ]
+  journal_id number [ not null, ref: > Journal.id, note: '소속된 Journal의 고유 ID (1일치 일지와 연결)' ]
+  type JournalItemType [ not null, note: '기록 유형 (예: Overview: 시황 개요, Review: 사후 복기, Scenario: 매매 시나리오 등)' ]
+  title string [ not null, note: 'JournalItem의 제목 또는 간략한 개요' ]
+  highlight ScoreType [ not null, note: '중요도 또는 핵심성 평가 (VeryHigh ~ VeryLow)' ]
+  created_at Date [ not null, note: '생성 시각' ]
+  updated_at Date [ not null, note: '최종 수정 시각' ]
+}
+
+Table Overview {
+  note: '시황 분석을 요약한 테이블. 해당 날짜의 시장에 대한 주관적 생각, 변동성, 영향력 등을 정리하며 시황 하위 테이블들과 연결된다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  journal_item_id number [ not null, ref: - JournalItem.id, note: 'JournalItem 참조 (시황이 작성된 복기 기록)' ]
+  thought string [ not null, note: '시장에 대한 주관적 생각 또는 인사이트' ]
+  volatility ScoreType [ not null, note: '시장 변동성 평가 점수 (VeryHigh ~ VeryLow)' ]
+  market_impact ScoreType [ not null, note: '시장 영향력 평가 점수 (VeryHigh ~ VeryLow)' ]
+}
+
+Table ChartOverview {
+  note: '시황 복기에서 관심 종목별로 시각적 분석 포인트를 정리하는 테이블. 심볼, 관심 이유, 중요도 등을 기록한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  overview_id number [ not null, ref: - Overview.id, note: 'Overview 참조 (해당 시황 개요와 연결)' ]
+  symbol_id number [ not null, ref: > Symbol.id, note: 'Symbol 참조 (관찰 대상 종목)' ]
+  interest ScoreType [ not null, note: '해당 종목에 대한 관심도 평가 (VeryHigh ~ VeryLow)' ]
+  interest_reason string [ not null, note: '관심을 가진 이유 또는 시장 포인트' ]
+}
+
+Table IndicatorOverview {
+  note: '시장 시황 복기 중 지표 수치를 기록하는 테이블. 공포탐욕지수(GreedAndFear), 온체인 지표 등 정량적 수치를 저장한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  overview_id number [ not null, ref: - Overview.id, note: 'Overview 참조 (해당 시황 개요와 연결)' ]
+  indicator_id number [ not null, ref: > Indicator.id, note: 'Indicator 참조 (사용된 지표)' ]
+  value number [ not null, note: '지표 수치 값 (예: 73)' ]
+}
+
+Table MacroOverview {
+  note: '거시경제 이벤트(예: FOMC, 고용지표 등) 발표 시점의 이전/예상/실제 수치를 기록하는 테이블. 시장 반응 해석에 활용된다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  overview_id number [ not null, ref: - Overview.id, note: 'Overview 참조 (해당 시황 개요와 연결)' ]
+  previous number [ not null, note: '이전 수치 (직전 발표 값)' ]
+  forecast number [ not null, note: '시장 예상 수치' ]
+  actual number [ not null, note: '실제 발표 수치' ]
+}
+
+Table EventOverview {
+  note: '뉴스, 정책, 소셜 미디어 등 이벤트 기반 시황 요소를 기록하는 테이블. 시장에 영향을 줄 수 있는 외부 이벤트 유형을 구분한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  overview_id number [ not null, ref: - Overview.id, note: 'Overview 참조 (이 이벤트가 포함된 시황)' ]
+  type EventType [ not null, note: '이벤트 유형 (News / Policy / SocialMedia)' ]
+  description string [ not null, note: '이벤트에 대한 내용' ]
+}
+
+Table Trading {
+  note: '개별 매매 또는 포지션에 대한 메타 정보 테이블. 종목, 전략 적합성, 리뷰 등을 기록하며 EntryScenario 및 ExitScenario와 연결된다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  journal_item_id number [ not null, ref: - JournalItem.id, note: 'JournalItem 참조 (이 매매 기록이 포함된 복기 JournalItem)' ]
+  symbol_id number [ not null, ref: > Symbol.id, note: 'Symbol 참조 (매매 종목)' ]
+  execution_score ScoreType [ not null, note: '전략 실행의 적절성 또는 수행력에 대한 주관적 평가' ]
+}
+
+Table Strategy {
+  note: '트레이딩 전략 사전 테이블. 사용자가 미리 정의한 각 전략의 특성과 성능을 저장하며, 실제 매매 계획(TradingStrategy) 또는 시나리오 작성 시 참조된다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  preference_id number [ not null, ref: - Preference.id, note: 'Preference 테이블 참조 (공통 메타데이터)' ]
+  bias StrategyBiasType [ not null, note: '전략 유형 (FollowTrend: 추세 추종, CounterTrend: 역추세)' ]
+  method_id number [ not null, ref: > StrategyMethod.id, note: 'StrategyMethod 참조 (전략 방법)' ]
+  score ScoreType [ not null, note: '전략에 대한 주관적인 평가 점수' ]
+  score_reason string [ not null, note: '점수에 대한 이유' ]
+}
+
+Table TradingStrategy {
+  note: '실제 시장 상황에서 관찰된 전략 실행 가능성 기록. 사용자는 차트나 지표 등에서 특정 전략이 적용 가능한 상황을 포착하고 이를 저장하며, 향후 시나리오 수립 시 참고 자료로 활용한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  strategy_id number [ not null, ref: - Strategy.id, note: '관찰된 전략의 ID (Strategy 참조)' ]
+  journal_item_id number [ not null, ref: - JournalItem.id, note: '기록 위치가 된 JournalItem (복기 노트) 참조' ] 
+  symbol_id number [ not null, ref: > Symbol.id, note: 'Symbol 참조 (해당 전략이 관찰된 자산)' ]
+  interval TimeIntervalType [ not null, note: '차트 관찰 시 사용된 시간 단위 (e.g. 1h, 4h)' ]
+  marketTrend MarketTrendType [ not null, note: '당시의 시장 추세 인식 상태' ]
+  min_liquidity_price number [ not null, note: '하단 주요 매물대 가격' ]
+  max_liquidity_price number [ not null, note: '상단 주요 매물대 가격' ]
+  is_valid boolean [ not null, note: '현재 전략이 유효하다고 판단되는지 여부' ]
+}
+
+Table JournalItemResource {
+  note: 'JournalItem와 Resource를 연결하는 다대다 관계 테이블. 하나의 복기 JournalItem에서 여러 자료를 참조하거나 공유하는 구조를 표현한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  journal_item_id number [ not null, ref: > JournalItem.id, note: 'JournalItem 참조 (자료를 활용한 복기 기록)' ]
+  resource_id number [ not null, ref: > Resource.id, note: 'Resource 참조 (참조된 자료)' ]
+  created_at Date [ not null, note: '연결이 생성된 시각' ]
+}
+
+Table Scenario {
+  note: '매매 시나리오의 핵심 메타 정보를 담는 테이블. 특정 종목(Symbol)에 대한 전략 구상과 트레이딩 아이디어의 방향성, 신뢰도, 작성 시점 등 주요 요소를 요약한다. EntryScenario / ExitScenario 등 세부 계획 테이블과 연결된다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  journal_item_id number [ not null, ref: - JournalItem.id, note: 'JournalItem 참조 (이 시나리오가 기록된 JournalItem)' ] 
+  type ScenarioType [ not null, note: '시나리오 유형 (Entry: 진입, Exit: 청산)' ]
+  symbol_id number [ not null, ref: > Symbol.id, note: 'Symbol 참조 (해당 시나리오가 적용되는 종목)' ]
+  marketTrend MarketTrendType [ not null, note: '시나리오 작성 시 인식된 시장 추세' ]
+  confidence_score ScoreType [not null, note: '시나리오에 대한 자신감 점수']
+  validity_score ScoreType [ not null, note: '시나리오 자체의 주관적 평가 점수 (적합성 또는 타당성 기준)' ]
+  is_valid boolean [ not null, note: '이 시나리오가 현재 유효한지 여부 (true: 유효)' ]
+}
+
+Table EntryScenario {
+  note: '진입 시나리오 세부 계획 테이블. 포지션 진입 시 고려한 전략, 가격 조건, 기대 손익비 등을 구체적으로 기록한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  scenario_id number [ not null, ref: - Scenario.id, note: 'Scenario 참조 (상위 시나리오)' ]
+  trading_id number [ not null, ref: - Trading.id, note: 'Trading 참조 (해당 매매 대상)' ]
+  strategyBiasType StrategyBiasType [ not null, note: '사용 전략 유형 (FollowTrend / CounterTrend)' ]
+  timeFrame TradeTimeFrameType [ not null, note: '전략 적용 시간 프레임 (Scalp ~ Investment)' ]
+  target_entry_price number [ not null, note: '목표 진입 가격' ]
+  max_stop_loss_price number [ not null, note: '허용 가능한 최대 손절 가격' ]
+  min_take_profit_price number [ not null, note: '기대 최소 익절 가격' ]
+  first_take_profit_weight number [ not null, note: '첫 익절 비중 (0.0 ~ 1.0)' ]
+  min_risk_reward_weight number [ not null, note: '기대 최소 손익비 (예: 2.0이면 수익 2 / 손실 1)' ]
+  max_invalidation_price number [ not null, note: '관점 폐기 기준의 상단 가격' ]
+  min_invalidation_price number [ not null, note: '관점 폐기 기준의 하단 가격' ]
+}
+
+Table ExitScenario {
+  note: '포지션 청산 조건을 정의한 테이블. 손절 및 익절 기준 가격과 해당 비중을 사전에 계획하여 트레이딩 감정 개입을 방지한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  scenario_id number [ not null, ref: - Scenario.id, note: 'Scenario 참조 (상위 시나리오)' ]
+  trading_id number [ not null, ref: - Trading.id, note: 'Trading 참조 (해당 포지션)' ]
+  stop_loss_price number [ not null, note: '손절 기준 가격 (도달 시 일부 또는 전체 청산)' ]
+  stop_loss_weight number [ not null, note: '손절 비중 (0.0 ~ 1.0)' ]
+  take_profit_price number [ not null, note: '익절 기준 가격 (도달 시 일부 또는 전체 청산)' ]
+  take_profit_weight number [ not null, note: '익절 비중 (0.0 ~ 1.0)' ]
+}
+
+Table ScenarioTradingStrategy {
+  note: '시나리오 설계 시 참조된 복수의 TradingStrategy와의 연결 테이블. 하나의 시나리오가 여러 전략 기반으로 구성될 수 있는 구조를 표현한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  scenario_id number [ not null, ref: > Scenario.id, note: 'Scenario 참조 (전략이 적용된 시나리오)' ]
+  trading_strategy_id number [ not null, ref: > TradingStrategy.id, note: 'TradingStrategy 참조 (참조된 전략 상황)' ]
+  created_at Date [ not null, note: '연결이 생성된 시각' ]
+}
+
+Table Order {
+  note: '실제 발생한 트레이딩 주문 정보를 기록하는 테이블. 진입(매수) 또는 청산(매도) 주문에 대한 가격, 수량, 수수료 등의 정보가 저장된다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  account_id number [ not null, ref: > Account.id, note: 'Account 참조 (이 주문이 발생한 계좌)' ]
+  type OrderType [ not null, note: '주문 유형 (Open: 진입, Close: 청산)' ]
+  symbol_id number [ not null, ref: > Symbol.id, note: 'Symbol 참조 (주문 대상 종목)' ]
+  direction PositionDirectionType [ not null, note: '포지션 방향 (Long: 매수, Short: 매도)' ]
+  price number [ not null, note: '실제 체결된 평균 가격' ]
+  quantity number [ not null, note: '실제 체결된 수량' ]
+  leverage number [ not null, note: '적용된 레버리지 배율 (예: 5배)' ]
+  fee number [ not null, note: '거래 수수료 (단위: 해당 통화)' ]
+  created_at Date [ not null, note: '주문 생성 시각' ]
+}
+
+Table OpenOrder {
+  note: '진입 주문의 상세 정보를 기록하는 테이블. 해당 주문이 어떤 트레이딩 기록(포지션)과 연결되어 있으며, 현재 미결제 수량이 얼마인지 저장한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  order_id number [ not null, ref: - Order.id, note: 'Order 참조 (진입 주문)' ]
+  trading_id number [ not null, ref: - Trading.id, note: 'Trading 참조 (연결된 매매 기록)' ]
+  unclosed_quantity number [ not null, note: '현재 미결제 계약 수량' ]
+}
+
+Table CloseOrder {
+  note: '청산 주문의 상세 정보를 기록하는 테이블. 해당 주문이 어떤 트레이딩 기록을 정산했는지, 손익 및 수익률을 기록한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  order_id number [ not null, ref: - Order.id, note: 'Order 참조 (청산 주문)' ]
+  trading_id number [ not null, ref: - Trading.id, note: 'Trading 참조 (연결된 매매 기록)' ]
+  pnl number [ not null, note: '실현 손익 (Profit and Loss)' ]
+  realized_return_rate number [ not null, note: '해당 주문의 수익률 (비율 단위)' ]
+}
+
+Table Transaction {
+  note: '계좌에 영향을 미치는 입출금, 포지션 청산 등 모든 금전 이동을 기록하는 테이블.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  account_id number [ not null, ref: > Account.id, note: 'Account 참조 (변동이 발생한 계좌)' ]
+  type TransactionType [ not null, note: '거래 유형 (Deposit: 입금, Withdrawal: 출금, Order: 포지션 청산)' ]
+  amount number [ not null, note: '총 변동 금액' ]
+  reserved_funds number [ not null, note: '해당 시점의 유보금' ]
+  available_balance number [ not null, note: '해당 시점의 가용 잔고' ]
+  description string [ not null, note: '해당 트랜잭션에 대한 설명 또는 메모' ]
+  created_at Date [ not null, note: '거래 발생 시각' ]
+}
+
+Table RiskManagement {
+  note: '자산 전체 또는 계좌 단위의 전반적인 리스크 정책을 정의하는 테이블. 손실률 제한, 수익률 목표, 유보금 제한을 설정한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  preference_id number [ not null, ref: - Preference.id, note: 'Preference 참조 (사용자 정의 리스크 기준)' ]
+  max_loss_rate number [ not null, note: '허용되는 최대 손실률 (예: 0.05는 -5%)' ]
+  min_profit_rate number [ not null, note: '달성하고자 하는 최소 수익률 (예: 0.02는 +2%)' ]
+  max_reserved_funds_rate number [ not null, note: '총 자산 중 유보금이 차지할 수 있는 최대 비중' ]
+}
+
+Table PositionRiskManagement {
+  note: '개별 포지션 단위의 리스크 제한을 정의하는 테이블. 포지션당 리스크 비중, 마진 크기, 손실 한도 등을 관리한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  preference_id number [ not null, ref: - Preference.id, note: 'Preference 참조 (사용자 정의 리스크 기준)' ]
+  max_risk_per_position number [ not null, note: '한 포지션에 허용되는 최대 리스크 비중 (0.0 ~ 1.0)' ]
+  capital_partition_count number [ not null, note: '전체 시드를 분할할 기준 수 (예: 5라면 5등분)' ]
+  margin_per_position number [ not null, note: '포지션당 투입하는 마진 금액' ]
+  max_drawdown_per_position number [ not null, note: '포지션당 허용되는 최대 손실 한도 (금액 또는 비율)' ]
+}
+
+Table AssetRiskManagement {
+  note: '하나의 복기 JournalItem에서 자산 단위 리스크 정책을 명시적으로 연결하는 테이블. 복기 기반의 전략별 리스크 구성 기록으로 사용된다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  journal_item_id number [ not null, ref: - JournalItem.id, note: 'JournalItem 참조 (복기 기록)' ]
+  risk_management_id number [ not null, ref: - RiskManagement.id, note: 'RiskManagement 참조 (적용된 자산 리스크 정책)' ]
+}
+
+Table AccountRiskManagement {
+  note: '특정 계좌에 적용된 자산 리스크, 계좌 리스크, 포지션 리스크 기준을 통합적으로 관리하는 테이블. 구성에 대한 평가 점수도 기록한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  asset_risk_management_id number [ not null, ref: > AssetRiskManagement.id, note: 'AssetRiskManagement 참조 (자산 리스크 전략)' ]
+  account_id number [ not null, ref: > Account.id, note: 'Account 참조 (해당 계좌)' ]
+  risk_management_id number [ not null, ref: - RiskManagement.id, note: 'RiskManagement 참조 (계좌 리스크 기준)' ]
+  position_risk_management_id number [ not null, ref: - PositionRiskManagement.id, note: 'PositionRiskManagement 참조 (포지션 리스크 기준)' ]
+}
+
+Table Principle {
+  note: '사용자의 사고 판단 기준을 정의하는 테이블. 복기 기록 중 판단의 일관성, 전략적 사고의 적합성 등을 평가하기 위한 기준 항목을 저장하며, Preference를 기반으로 한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  preference_id number [ not null, ref: - Preference.id, note: 'Preference 참조 (이 원칙이 소속된 사용자 기준)' ]
+  evaluation_criteria string [ not null, note: '판단의 기준 문장 또는 체크리스트 형식의 항목 설명' ]
+}
+
+Table PrincipleEvaluation {
+  note: '복기 기록(JournalItem)에 대해 특정 Principle을 기준으로 판단의 적절성을 평가한 기록 테이블. 사고 기준이 얼마나 충족되었는지를 수치화한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  journal_item_id number [ not null, ref: - JournalItem.id, note: 'JournalItem 참조 (이 평가가 기록된 복기 JournalItem)' ]
+  principle_id number [ not null, ref: - Principle.id, note: 'Principle 참조 (기준이 된 사고 원칙)' ]
+  score ScoreType [ not null, note: '해당 시점에서 이 원칙이 얼마나 충족되었는지에 대한 평가 점수' ]
+  score_reason string [ not null, note: '점수에 대한 이유' ]
+}
+
+Table Note {
+  note: '트레이딩 활동 중 접한 외부 정보나 콘텐츠(책, 웹사이트, 개인 아이디어 등)를 기록하는 테이블. 얻은 인사이트, 관련 행동 전략, 사후 실행 아이디어 등을 구조화한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  journal_item_id number [ not null, ref: - JournalItem.id, note: 'JournalItem 참조 (이 노트가 기록된 복기 JournalItem)' ]
+  type NoteType [ not null, note: '노트 출처 유형 (예: Book, Web, Idea)' ]
+  source string [ not null, note: '노트가 발생한 출처명 (예: 블로그 주소, 책 제목 등)' ]
+  reason string [ not null, note: '이 노트를 작성한 이유' ] 
+  thought string [ not null, note: '이 노트에 대한 내 생각' ]
+  action_plan string [ not null, note: '이 노트를 기반으로 한 행동 전략 또는 실천 계획' ]
+}
+
+Table Review {
+  note: 'JournalItem 간의 복기 관계를 표현하는 테이블. 하나의 JournalItem(예: 매매 시나리오, 인사이트 등)에 대해 사후 평가 및 성찰을 기록하며, 대상 JournalItem는 모든 JournalItem 타입이 될 수 있다. Review는 Review 자신을 리뷰할 수 없다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  journal_item_id number [ not null, ref: - JournalItem.id, note: '작성된 복기 JournalItem의 참조 ID (자기 자신)' ]
+  target_id number [ not null, ref: - JournalItem.id, note: '복기 대상이 되는 JournalItem ID (모든 JournalItem 가능)' ]
+  review_purpose string [ not null, note: '복기 목적 또는 배경' ]
+  decision string [ not null, note: '기존 판단 내용' ]
+  decision_reason string [ not null, note: '그 판단을 내리게 된 이유' ]
+  result string [ not null, note: '판단의 결과' ]
+  evaluation_score ScoreType [ not null, note: '판단의 적절성에 대한 평가 점수' ]
+  evaluation string [ not null, note: '판단에 대한 사후 평가 또는 반성' ]
+  lesson string [ not null, note: '이번 복기를 통해 얻은 교훈 또는 반성 요약' ]
+  action_plan string [ not null, note: '향후 행동 전략 또는 개선 계획' ]
+}
+
+Table Resource {
+  note: '이미지, 링크 등 외부 자료를 저장하는 테이블. JournalItem와 연결되어 복기 시 참고 자료로 활용된다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  type ResourceType [ not null, note: '자료 유형 (예: Image, WebSite)' ]
+  title string [ not null, note: '자료 제목 또는 식별명' ]
+  memo string [ not null, note: '자료 내용 요약 또는 메모' ]
+  uri string [ not null, note: '자료의 URI 또는 링크 주소' ]
+  created_at Date [ not null, note: '자료가 등록된 시각' ]
+}
+
+Table Preference {
+  note: '사용자가 정의한 기준, 전략, 리스크 정책 등을 관리하기 위한 상위 메타 테이블. Principle, Strategy, RiskManagement 등의 기반으로 사용된다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  type PreferenceType [ not null, note: '사용자가 정의한 기준들의 유형(Principle, Strategy, RiskManagement)' ]
+  title string [ not null, note: '기준 또는 전략의 명칭' ]
+  description string [ not null, note: '기준 또는 전략에 대한 설명' ]
+  importance ScoreType [ not null, note: '중요도 평가 점수 (VeryHigh ~ VeryLow)' ]
+  is_valid boolean [ not null, note: '현재 유효한 기준인지 여부 (true: 사용 중)' ]
+  created_at Date [ not null, note: '생성 시각' ]
+  updated_at Date [ not null, note: '최종 수정 시각' ]
+}
+
+Table Symbol {
+  note: '거래 가능한 암호화폐 심볼 정보를 담는 테이블. Soft delete 기능을 통해 코인 상장 폐지 시에도 기존 데이터 무결성을 유지한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  name string [ not null, unique, note: '심볼명 (예: BTC, ETH)' ]
+  full_name string [ not null, note: '전체 이름 (예: Bitcoin, Ethereum)' ]
+  created_at Date [ not null, note: '생성 시각' ]
+  updated_at Date [ not null, note: '최종 수정 시각' ]
+  deleted_at Date [ note: 'Soft delete 시각 (null이면 활성 상태)' ]
+}
+
+Table StrategyMethod {
+  note: '트레이딩 전략 방법을 정의하는 테이블. 사용자가 자유롭게 전략 방법을 추가할 수 있으며, Soft delete 기능을 통해 기존 데이터 무결성을 유지한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  name string [ not null, unique, note: '전략 방법명 (예: HorizontalTrendLine, DiagonalTrendLine)' ]
+  description string [ not null, note: '전략 방법에 대한 설명' ]
+  created_at Date [ not null, note: '생성 시각' ]
+  updated_at Date [ not null, note: '최종 수정 시각' ]
+  deleted_at Date [ note: 'Soft delete 시각 (null이면 활성 상태)' ]
+}
+
+Table Indicator {
+  note: '시장 분석에 사용되는 지표 정보를 담는 테이블. 사용자가 자유롭게 지표를 추가할 수 있으며, Soft delete 기능을 통해 기존 데이터 무결성을 유지한다.'
+
+  id number [ pk, not null, note: '고유식별자' ]
+  name string [ not null, unique, note: '지표명 (예: GreedAndFear, RSI, MACD)' ]
+  full_name string [ not null, note: '전체 이름 (예: Greed and Fear Index, Relative Strength Index)' ]
+  description string [ not null, note: '지표에 대한 설명' ]
+  created_at Date [ not null, note: '생성 시각' ]
+  updated_at Date [ not null, note: '최종 수정 시각' ]
+  deleted_at Date [ note: 'Soft delete 시각 (null이면 활성 상태)' ]
+}

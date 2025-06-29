@@ -1,0 +1,28 @@
+/// ========================================
+/// REVIEW MODELS
+/// ========================================
+
+/// JournalItem 간의 복기 관계
+/// 하나의 JournalItem(예: 매매 시나리오, 인사이트 등)에 대해 사후 평가 및 성찰을 기록
+/// 대상 JournalItem는 모든 JournalItem 타입이 될 수 있음 (자기 자신 제외)
+model Review {
+  id Int @id @default(autoincrement()) // 고유식별자
+  journal_item_id Int // 작성된 복기 JournalItem의 참조 ID (자기 자신)
+  target_id Int // 복기 대상이 되는 JournalItem ID (모든 JournalItem 가능)
+  review_purpose String @default("") // 복기 목적 또는 배경
+  decision String @default("") // 기존 판단 내용
+  decision_reason String @default("") // 그 판단을 내리게 된 이유
+  result String @default("") // 판단의 결과
+  evaluation_score ScoreType // 판단의 적절성에 대한 평가 점수
+  evaluation String @default("") // 판단에 대한 사후 평가 또는 반성
+  lesson String @default("") // 이번 복기를 통해 얻은 교훈 또는 반성 요약
+  action_plan String @default("") // 향후 행동 전략 또는 개선 계획
+
+  // Relations
+  journal_item_as_reviewer JournalItem @relation("Reviewer", fields: [journal_item_id], references: [id])
+  journal_item_as_target JournalItem @relation("Target", fields: [target_id], references: [id])
+
+  @@index([journal_item_id])
+  @@index([target_id])
+  @@index([evaluation_score])
+} 

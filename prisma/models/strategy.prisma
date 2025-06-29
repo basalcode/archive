@@ -1,0 +1,54 @@
+/// ========================================
+/// TRADING STRATEGY MODELS
+/// ========================================
+
+/// 트레이딩 전략 정의
+/// 사용자가 미리 정의한 각 전략의 특성과 성능을 저장
+/// 실제 매매 계획(TradingStrategy) 또는 시나리오 작성 시 참조
+model Strategy {
+  id Int @id @default(autoincrement()) // 고유식별자
+  preference_id Int // Preference 테이블 참조 (공통 메타데이터)
+  bias StrategyBiasType // 전략 유형 (FollowTrend: 추세 추종, CounterTrend: 역추세)
+  method_id Int // StrategyMethod 참조 (전략 방법)
+  score ScoreType // 전략에 대한 주관적인 평가 점수
+  score_reason String @default("") // 점수에 대한 이유
+
+  // Relations
+  preference Preference @relation(fields: [preference_id], references: [id])
+  method StrategyMethod @relation(fields: [method_id], references: [id])
+  
+  // TradingStrategy relations
+  trading_strategies TradingStrategy[]
+
+  @@index([preference_id])
+  @@index([method_id])
+  @@index([bias])
+}
+
+/// 실제 전략 관찰 기록
+/// 실제 시장 상황에서 관찰된 전략 실행 가능성 기록
+/// 사용자는 차트나 지표 등에서 특정 전략이 적용 가능한 상황을 포착하고 저장
+/// 향후 시나리오 수립 시 참고 자료로 활용
+model TradingStrategy {
+  id Int @id @default(autoincrement()) // 고유식별자
+  strategy_id Int // 관찰된 전략의 ID (Strategy 참조)
+  journal_item_id Int // 기록 위치가 된 JournalItem (복기 노트) 참조
+  symbol_id Int // Symbol 참조 (해당 전략이 관찰된 자산)
+  interval TimeIntervalType // 차트 관찰 시 사용된 시간 단위 (e.g. 1h, 4h)
+  market_trend MarketTrendType // 당시의 시장 추세 인식 상태
+  min_liquidity_price String // 하단 주요 매물대 가격 - 부동소수점 오차 방지를 위해 문자열로 저장
+  max_liquidity_price String // 상단 주요 매물대 가격 - 부동소수점 오차 방지를 위해 문자열로 저장
+
+  // Relations
+  strategy Strategy @relation(fields: [strategy_id], references: [id])
+  journal_item JournalItem @relation(fields: [journal_item_id], references: [id])
+  symbol Symbol @relation(fields: [symbol_id], references: [id])
+  
+  // ScenarioTradingStrategy relations
+  scenario_trading_strategies ScenarioTradingStrategy[]
+
+  @@index([strategy_id])
+  @@index([journal_item_id])
+  @@index([symbol_id])
+  @@index([interval])
+}

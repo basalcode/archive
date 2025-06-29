@@ -1,0 +1,131 @@
+/// ========================================
+/// ENUM DEFINITIONS
+/// ========================================
+
+/// 트레이딩 일지 항목의 유형을 정의
+enum JournalItemType {
+  Overview // 시장 개요 및 분석 요약
+  AssetRiskManagement // 자산 리스크 관리 정책
+  TradingStrategy // 트레이딩 전략 관찰 기록
+  Scenario // 매매 시나리오 계획
+  PrincipleEvaluation // 트레이딩 원칙 평가
+  Note // 외부 정보 및 아이디어 기록
+  Review // 사후 복기 및 반성
+}
+
+/// 거래에 사용되는 통화 단위
+enum CurrencyType {
+  USDT // Tether USD
+  USDC // USD Coin
+  KRW // 한국 원화
+}
+
+/// 포지션의 방향성
+enum PositionDirectionType {
+  Long // 매수 포지션 (가격 상승 기대)
+  Short // 매도 포지션 (가격 하락 기대)
+}
+
+/// 시장의 전반적인 추세 상태
+enum MarketTrendType {
+  VeryBullish // 매우 강한 상승 추세
+  Bullish // 상승 추세
+  Crabish // 횡보 또는 중립 상태
+  Bearish // 하락 추세
+  VeryBearish // 매우 강한 하락 추세
+}
+
+/// 평가 점수 체계 (5단계)
+enum ScoreType {
+  VeryHigh  // 매우 높음 (90-100점)
+  High      // 높음 (70-89점)
+  Medium    // 보통 (50-69점)
+  Low       // 낮음 (30-49점)
+  VeryLow   // 매우 낮음 (0-29점)
+}
+
+/// 차트 분석에 사용되는 시간 간격
+enum TimeIntervalType {
+  OneMinute // 1분
+  TwoMinutes // 2분
+  ThreeMinutes // 3분
+  FiveMinutes // 5분
+  TenMinutes // 10분
+  FifteenMinutes // 15분
+  ThirtyMinutes // 30분
+  FortyFiveMinutes // 45분
+  OneHour // 1시간
+  TwoHours // 2시간
+  ThreeHours // 3시간
+  FourHours // 4시간
+  TwelveHours // 12시간
+  OneDay // 1일
+  OneWeek // 1주
+  OneMonth // 1개월
+  ThreeMonths // 3개월
+  SixMonths // 6개월
+  TwelveMonths // 12개월
+}
+
+/// 트레이딩 전략의 시간 프레임
+enum TradeTimeFrameType {
+  Scalp // 초단타 (수분-수십분)
+  Day // 데이 트레이딩 (1일 내)
+  Swing // 스윙 트레이딩 (수일-수주)
+  Position // 포지션 트레이딩 (수주-수개월)
+  Investment // 장기 투자 (수개월-수년)
+}
+
+/// 전략의 기본 방향성
+enum StrategyBiasType {
+  FollowTrend // 추세 추종 전략
+  CounterTrend // 역추세 전략
+}
+
+/// 주문의 유형
+enum OrderType {
+  Open // 포지션 진입 주문
+  Close // 포지션 청산 주문
+}
+
+/// 참고 자료의 유형
+enum ResourceType {
+  Image // 이미지 파일
+  Video // 동영상 파일
+  Audio // 음성 파일
+  Document // 문서 파일
+}
+
+/// 시나리오의 유형
+enum ScenarioType {
+  Entry // 진입 시나리오
+  Exit // 청산 시나리오
+}
+
+/// 계좌 거래의 유형
+enum TransactionType {
+  Deposit // 입금
+  Withdrawal // 출금
+  Order // 주문에 따른 잔고 변동
+}
+
+/// 노트의 출처 유형
+enum NoteType {
+  Book // 책, 논문, 리서치 등
+  Web // 블로그, 뉴스, 소셜미디어 등
+  Idea // 개인적인 아이디어, 깨달음 등
+}
+
+/// 시장에 영향을 주는 이벤트 유형
+enum EventType {
+  News // 뉴스 이벤트
+  Policy // 정책 발표
+  SocialMedia // 소셜 미디어 언급
+}
+
+/// 사용자 설정의 유형
+enum PreferenceType {
+  Strategy // 전략 설정
+  RiskManagement // 리스크 관리 설정
+  Principle // 트레이딩 원칙 설정
+} 
