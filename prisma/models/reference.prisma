@@ -2,63 +2,58 @@
 /// REFERENCE DATA MODELS
 /// ========================================
 
-/// 거래 가능한 암호화폐 심볼 정보
-/// Soft delete 기능으로 코인 상장 폐지 시에도 기존 데이터 무결성을 유지
-/// 모든 거래 관련 모델에서 참조되는 기본 정보
+/// Symbol - 거래 심볼
+/// 암호화폐 거래 심볼의 기본 정보를 관리하는 모델
 model Symbol {
-  id Int @id @default(autoincrement()) // 고유식별자
-  name String @unique // 심볼명 (예: BTC, ETH)
-  full_name String @unique // 전체 이름 (예: Bitcoin, Ethereum)
-  created_at DateTime @default(now()) // 생성 시각
-  updated_at DateTime @updatedAt // 최종 수정 시각
-  deleted_at DateTime? // Soft delete 시각 (null이면 활성 상태)
+  id Int @id @default(autoincrement())
+  name String @unique /// 심볼명
+  full_name String @unique /// 전체 이름
+  created_at DateTime @default(now()) /// 생성 시각
+  updated_at DateTime @updatedAt /// 수정 시각
+  deactivated_at DateTime? /// 비활성화 시각
 
   // Relations
-  chart_overviews ChartOverview[]
-  tradings Trading[]
-  trading_strategies TradingStrategy[]
+  positions Position[]
+  strategy_observations StrategyObservation[]
   scenarios Scenario[]
   orders Order[]
+  trades Trade[]
 
-  @@index([deleted_at])
-  @@index([name])
+  @@index([created_at])
+  @@index([deactivated_at])
 }
 
-/// 트레이딩 전략 방법 정의
-/// 사용자가 자유롭게 전략 방법을 추가할 수 있으며, 
-/// Soft delete 기능으로 기존 데이터 무결성을 유지
-/// 실제 전략 실행 시 참조되는 방법론 정보
+/// StrategyMethod - 전략 방법
+/// 트레이딩 전략의 방법론을 정의하는 모델
 model StrategyMethod {
-  id Int @id @default(autoincrement()) // 고유식별자
-  name String @unique // 전략 방법명 (예: HorizontalTrendLine, DiagonalTrendLine)
-  description String @default("") // 전략 방법에 대한 설명
-  created_at DateTime @default(now()) // 생성 시각
-  updated_at DateTime @updatedAt // 최종 수정 시각
-  deleted_at DateTime? // Soft delete 시각 (null이면 활성 상태)
+  id Int @id @default(autoincrement())
+  name String @unique /// 방법명
+  description String @default("") /// 설명
+  created_at DateTime @default(now()) /// 생성 시각
+  updated_at DateTime @updatedAt /// 수정 시각
+  deactivated_at DateTime? /// 비활성화 시각
 
   // Relations
-  strategies Strategy[]
+  strategy_definitions StrategyDefinition[]
 
-  @@index([deleted_at])
-  @@index([name])
+  @@index([created_at])
+  @@index([deactivated_at])
 }
 
-/// 시장 분석 지표 정보
-/// 사용자가 자유롭게 지표를 추가할 수 있으며, 
-/// Soft delete 기능으로 기존 데이터 무결성을 유지
-/// 시장 분석 및 시황 기록 시 참조되는 지표 정보
+/// Indicator - 시장 지표
+/// 시장 분석에 사용되는 지표 정보를 관리하는 모델
 model Indicator {
-  id Int @id @default(autoincrement()) // 고유식별자
-  name String @unique // 지표명 (예: GreedAndFear, RSI, MACD)
-  full_name String @unique // 전체 이름 (예: Greed and Fear Index, Relative Strength Index)
-  description String @default("") // 지표에 대한 설명
-  created_at DateTime @default(now()) // 생성 시각
-  updated_at DateTime @updatedAt // 최종 수정 시각
-  deleted_at DateTime? // Soft delete 시각 (null이면 활성 상태)
+  id Int @id @default(autoincrement())
+  name String @unique /// 지표명
+  full_name String @unique /// 전체 이름
+  description String @default("") /// 설명
+  created_at DateTime @default(now()) /// 생성 시각
+  updated_at DateTime @updatedAt /// 수정 시각
+  deactivated_at DateTime? /// 비활성화 시각
 
   // Relations
-  indicator_overviews IndicatorOverview[]
+  // 향후 필요시 구조화된 지표 데이터 연결 가능
 
-  @@index([deleted_at])
-  @@index([name])
+  @@index([created_at])
+  @@index([deactivated_at])
 } 

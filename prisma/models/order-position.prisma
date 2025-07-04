@@ -1,0 +1,123 @@
+/// ========================================
+/// ORDER & POSITION MODELS
+/// ========================================
+
+/// Trade - 거래 정보
+/// 하나의 심볼에 대한 여러 진입/청산을 추적하는 거래를 관리하는 모델
+/// OpenOrder 1:N, CloseOrder 1:N 구조로 유연한 포지션 관리
+model Trade {
+  id Int @id @default(autoincrement())
+  journal_id Int @unique /// Journal 참조
+  symbol_id Int /// Symbol 참조
+  execution_score ScoreType /// 전략 실행 평가
+  realized_pnl String @default("0") /// 누적 실현 손익
+  total_quantity String @default("0") /// 총 보유 수량 (진입 - 청산)
+  avg_entry_price String @default("0") /// 평균 진입가
+  is_active Boolean @default(true) /// 활성 상태 (완전 청산 여부)
+  created_at DateTime @default(now()) /// 생성 시각
+  updated_at DateTime @updatedAt /// 수정 시각
+
+  // Relations
+  journal Journal @relation(fields: [journal_id], references: [id])
+  symbol Symbol @relation(fields: [symbol_id], references: [id])
+  open_orders OpenOrder[] /// 1:N 관계 - 여러 진입 가능
+  close_orders CloseOrder[] /// 1:N 관계 - 여러 청산 가능
+
+  @@index([journal_id])
+  @@index([symbol_id])
+  @@index([is_active])
+  @@index([created_at])
+}
+
+/// Position - 포지션 정보
+/// 개별 매매 포지션의 메타데이터를 관리하는 모델
+/// Open Order로 생성되고, Close Order로 청산되는 구조
+model Position {
+  id Int @id @default(autoincrement())
+  journal_id Int @unique /// Journal 참조
+  symbol_id Int /// Symbol 참조
+  execution_score ScoreType /// 전략 실행 평가
+  realized_pnl String @default("0") /// 누적 실현 손익
+
+  // Relations
+  journal Journal @relation(fields: [journal_id], references: [id])
+  symbol Symbol @relation(fields: [symbol_id], references: [id])
+  open_order OpenOrder? /// 1:1 관계
+  close_orders CloseOrder[] /// 1:N 관계
+
+  @@index([symbol_id])
+  @@index([execution_score])
+}
+
+/// Order - 주문 정보
+/// 실제 발생한 트레이딩 주문의 기본 정보를 관리하는 모델
+model Order {
+  id Int @id @default(autoincrement())
+  account_id Int /// Account 참조
+  symbol_id Int /// Symbol 참조
+  type OrderType /// 주문 유형 (Open/Close)
+  direction PositionDirectionType /// 포지션 방향 (Long/Short)
+  price String /// 체결 가격
+  quantity String /// 체결 수량
+  leverage Decimal @db.Decimal(5, 2) /// 레버리지 배율
+  fee String /// 거래 수수료
+  executed_at DateTime @default(now()) /// 체결 시각
+  created_at DateTime @default(now()) /// 주문 생성 시각
+  updated_at DateTime @updatedAt /// 수정 시각
+  deactivated_at DateTime? /// 비활성화 시각
+
+  // Relations
+  account Account @relation(fields: [account_id], references: [id])
+  symbol Symbol @relation(fields: [symbol_id], references: [id])
+  open_order OpenOrder?
+  close_order CloseOrder?
+  transaction Transaction?
+
+  @@index([account_id])
+  @@index([symbol_id])
+  @@index([type])
+  @@index([created_at])
+  @@index([deactivated_at])
+}
+
+/// OpenOrder - 진입 주문 상세 정보
+/// 포지션 진입과 관련된 상세 정보를 관리하는 모델
+model OpenOrder {
+  id Int @id @default(autoincrement())
+  order_id Int? @unique /// Order 참조
+  position_id Int @unique /// Position 참조
+  trade_id Int /// Trade 참조
+  unclosed_quantity String /// 미결제 수량
+  entry_scenario_id Int /// EntryScenario 참조
+
+  // Relations
+  order Order? @relation(fields: [order_id], references: [id])
+  position Position @relation(fields: [position_id], references: [id])
+  trade Trade @relation(fields: [trade_id], references: [id])
+  entry_scenario EntryScenario @relation(fields: [entry_scenario_id], references: [id])
+
+  @@index([entry_scenario_id])
+  @@index([trade_id])
+}
+
+/// CloseOrder - 청산 주문 상세 정보
+/// 포지션 청산과 관련된 상세 정보를 관리하는 모델
+model CloseOrder {
+  id Int @id @default(autoincrement())
+  order_id Int @unique /// Order 참조
+  position_id Int /// Position 참조
+  trade_id Int /// Trade 참조
+  pnl String /// 실현 손익
+  realized_return_rate Decimal @db.Decimal(5,4) /// 수익률 (비중 관련)
+  exit_scenario_id Int /// ExitScenario 참조
+
+  // Relations
+  order Order @relation(fields: [order_id], references: [id])
+  position Position @relation(fields: [position_id], references: [id])
+  trade Trade @relation(fields: [trade_id], references: [id])
+  exit_scenario ExitScenario @relation(fields: [exit_scenario_id], references: [id])
+
+  @@index([position_id])
+  @@index([exit_scenario_id])
+  @@index([trade_id])
+}

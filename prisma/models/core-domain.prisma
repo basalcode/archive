@@ -1,0 +1,83 @@
+/// ========================================
+/// CORE DOMAIN MODELS
+/// ========================================
+
+/// Journal - 트레이딩 일지
+/// 매매 활동의 다양한 기록을 통합 관리하는 모델
+model Journal {
+  id Int @id @default(autoincrement())
+  date DateTime /// 일지 작성 날짜
+  title String @default("") /// 제목
+  content String @default("") /// 내용
+  highlight ScoreType /// 중요도 평가
+  created_at DateTime @default(now()) /// 생성 시각
+  updated_at DateTime @updatedAt /// 수정 시각
+  deactivated_at DateTime? /// 비활성화 시각
+
+  // Relations
+  journal_resources JournalResource[]
+  portfolio_risk_management PortfolioRiskManagement?
+  strategy_observation StrategyObservation?
+  scenario Scenario?
+  position Position?
+  trade Trade?
+  principle_evaluation PrincipleEvaluation?
+  note Note?
+  journal_reviews JournalReview[]
+
+  @@index([date])
+  @@index([highlight])
+  @@index([created_at])
+  @@index([deactivated_at])
+}
+
+/// JournalResource - Journal-Resource 연결
+/// Journal과 참고 자료의 다대다 관계를 관리하는 모델
+model JournalResource {
+  id Int @id @default(autoincrement())
+  journal_id Int @unique /// Journal 참조
+  resource_id Int /// Resource 참조
+  created_at DateTime @default(now()) /// 생성 시각
+
+  // Relations
+  journal Journal @relation(fields: [journal_id], references: [id])
+  resource Resource @relation(fields: [resource_id], references: [id])
+
+  @@index([journal_id])
+  @@index([resource_id])
+  @@index([created_at])
+}
+
+/// Resource - 참고 자료
+/// 이미지, 링크 등 외부 자료를 저장하는 모델
+model Resource {
+  id Int @id @default(autoincrement())
+  type ResourceType /// 자료 유형
+  title String @default("") /// 제목
+  memo String @default("") /// 메모
+  uri String /// URI 또는 링크
+  created_at DateTime @default(now()) /// 생성 시각
+
+  // Relations
+  journal_resources JournalResource[]
+
+  @@index([type])
+  @@index([created_at])
+}
+
+/// Note - 외부 정보 기록
+/// 트레이딩 활동 중 접한 외부 정보나 아이디어를 기록하는 모델
+model Note {
+  id Int @id @default(autoincrement())
+  journal_id Int @unique /// Journal 참조
+  type NoteType /// 출처 유형
+  source String @default("") /// 출처명
+  reason String @default("") /// 작성 이유
+  thought String @default("") /// 개인 생각
+  action_plan String @default("") /// 행동 계획
+
+  // Relations
+  journal Journal @relation(fields: [journal_id], references: [id])
+
+  @@index([type])
+} 

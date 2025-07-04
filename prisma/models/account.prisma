@@ -2,36 +2,35 @@
 /// ACCOUNT & EXCHANGE MODELS
 /// ========================================
 
-/// 암호화폐 거래소 정보
-/// 새로운 거래소 추가 시 유연하게 확장 가능하며, 
-/// Soft delete 기능으로 기존 데이터 무결성을 유지
+/// Exchange - 거래소 정보
+/// 암호화폐 거래소의 기본 정보를 관리하는 모델
 model Exchange {
-  id Int @id @default(autoincrement()) // 고유식별자
-  name String @unique // 거래소명 (예: Binance, Bybit)
-  description String @default("") // 거래소에 대한 설명
-  created_at DateTime @default(now()) // 생성 시각
-  updated_at DateTime @updatedAt // 최종 수정 시각
-  deleted_at DateTime? // Soft delete 시각 (null이면 활성 상태)
+  id Int @id @default(autoincrement())
+  name String @unique /// 거래소명
+  description String @default("") /// 설명
+  created_at DateTime @default(now()) /// 생성 시각
+  updated_at DateTime @updatedAt /// 수정 시각
+  deactivated_at DateTime? /// 비활성화 시각
 
   // Relations
   accounts Account[]
 
-  @@index([deleted_at])
+  @@index([created_at])
+  @@index([deactivated_at])
 }
 
-/// 사용자 계좌 정보
-/// Soft delete 기능으로 계좌 삭제 시에도 기존 주문 내역과의 관계를 유지
-/// Exchange가 삭제되면 연관된 모든 Account도 Soft Delete됨
+/// Account - 계좌 정보
+/// 사용자의 거래 계좌 정보를 관리하는 모델
 model Account {
-  id Int @id @default(autoincrement()) // 고유식별자
-  exchange_id Int // Exchange 참조 (거래소)
-  name String @unique // 계좌명
-  description String @default("") // 계좌설명
-  currency CurrencyType // 통화 단위 (USDT, USDC, KRW 등)
-  is_virtual Boolean // 가상 계좌인지 여부 (페이퍼 트레이딩용)
-  created_at DateTime @default(now()) // 생성 시각
-  updated_at DateTime @updatedAt // 최종 수정 시각
-  deleted_at DateTime? // Soft delete 시각 (null이면 활성 상태)
+  id Int @id @default(autoincrement())
+  exchange_id Int /// Exchange 참조
+  name String @default("") /// 계좌명
+  description String @default("") /// 설명
+  currency CurrencyType @default(USDT) /// 통화
+  is_virtual Boolean @default(false) /// 가상 계좌 여부
+  created_at DateTime @default(now()) /// 생성 시각
+  updated_at DateTime @updatedAt /// 수정 시각
+  deactivated_at DateTime? /// 비활성화 시각
 
   // Relations
   exchange Exchange @relation(fields: [exchange_id], references: [id])
@@ -39,32 +38,33 @@ model Account {
   transactions Transaction[]
   account_risk_managements AccountRiskManagement[]
 
-  @@index([deleted_at])
   @@index([exchange_id])
   @@index([created_at])
-} 
+  @@index([deactivated_at])
+}
 
-/// 계좌 잔고 변동 내역
-/// 입출금, 포지션 청산 등 모든 금전 이동을 기록하여 
-/// 계좌 잔고 추적 및 감사 추적에 활용
-/// Account가 삭제되면 연관된 모든 Transaction도 Soft Delete됨
+/// Transaction - 거래 내역
+/// 계좌의 모든 금전 변동 내역을 관리하는 모델
 model Transaction {
-  id Int @id @default(autoincrement()) // 고유식별자
-  account_id Int // Account 참조 (변동이 발생한 계좌)
-  type TransactionType // 거래 유형 (Deposit: 입금, Withdrawal: 출금, Order: 포지션 청산)
-  amount String // 총 변동 금액 - 부동소수점 오차 방지를 위해 문자열로 저장
-  reserved_funds String // 해당 시점의 유보금 - 부동소수점 오차 방지를 위해 문자열로 저장
-  available_balance String // 해당 시점의 가용 잔고 - 부동소수점 오차 방지를 위해 문자열로 저장
-  description String @default("") // 해당 트랜잭션에 대한 설명 또는 메모
-  created_at DateTime @default(now()) // 거래 발생 시각
-  updated_at DateTime @updatedAt // 최종 수정 시각
-  deleted_at DateTime? // Soft delete 시각 (null이면 활성 상태)
+  id Int @id @default(autoincrement())
+  account_id Int /// Account 참조
+  order_id Int @unique /// Order 참조
+  type TransactionType /// 거래 유형
+  amount String /// 변동 금액
+  reserved_funds String /// 유보금
+  available_balance String /// 가용 잔고
+  description String @default("") /// 설명
+  created_at DateTime @default(now()) /// 생성 시각
+  updated_at DateTime @updatedAt /// 수정 시각
+  deactivated_at DateTime? /// 비활성화 시각
 
   // Relations
   account Account @relation(fields: [account_id], references: [id])
+  order Order? @relation(fields: [order_id], references: [id])
 
   @@index([account_id])
+  @@index([order_id])
   @@index([type])
   @@index([created_at])
-  @@index([deleted_at])
+  @@index([deactivated_at])
 } 

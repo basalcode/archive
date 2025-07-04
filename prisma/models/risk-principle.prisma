@@ -1,0 +1,111 @@
+/// ========================================
+/// RISK MANAGEMENT & PRINCIPLE MODELS
+/// ========================================
+
+/// Preference - 사용자 설정
+/// 사용자가 정의한 기준, 전략, 리스크 정책의 메타데이터를 관리하는 모델
+model Preference {
+  id Int @id @default(autoincrement())
+  type PreferenceType /// 설정 유형
+  title String @default("") /// 제목
+  description String @default("") /// 설명
+  importance ScoreType /// 중요도
+  is_active Boolean @default(true) /// 유효성 여부
+  created_at DateTime @default(now()) /// 생성 시각
+  updated_at DateTime @updatedAt /// 수정 시각
+
+  // Relations
+  strategies StrategyDefinition[]
+  position_risk_managements RiskManagementPolicy[]
+  principle_definitions PrincipleDefinition[]
+
+  @@index([type])
+  @@index([is_active])
+  @@index([created_at])
+}
+
+/// RiskManagementPolicy - 트레이드 리스크 관리 정책
+/// 한 번의 트레이드(동일 심볼 포지션 진입부터 완전 청산까지)에 대한 리스크 제한 정책을 관리하는 모델
+model RiskManagementPolicy {
+  id Int @id @default(autoincrement())
+  preference_id Int /// Preference 참조
+
+  tradeRiskRate Decimal @db.Decimal(5,4) /// 트레이드 손실 한계 비율: 한 트레이드 시 계좌 총자산 대비 손실 한계
+  tradeMarginRate Decimal @db.Decimal(5,4) /// 트레이드 마진 비율: 한 트레이드 시 계좌 총자산 대비 가용 마진 비율
+  totalMarginLimitRate Decimal @db.Decimal(5,4) /// 최대 총 마진 비율: 모든 트레이드의 진입 마진 합산 시 총자산 대비 제한 비율
+  marginLossLimitRate Decimal @db.Decimal(5,4) /// 마진 손실 한계 비율: 마진에 대한 손실률 제한
+
+  // stopLossRate Decimal @db.Decimal(5,4) // 차트 손절 비율: 진입가 대비 손절가의 차트상 손실률
+
+  // Relations
+  preference Preference @relation(fields: [preference_id], references: [id])
+  account_risk_managements AccountRiskManagement[]
+
+  @@index([preference_id])
+}
+
+/// PortfolioRiskManagement - 전체 자산 리스크 관리
+/// 전체 자산에 적용된 리스크 정책들의 통합 관리를 담당하는 모델
+model PortfolioRiskManagement {
+  id Int @id @default(autoincrement())
+  journal_id Int @unique /// Journal 참조
+  created_at DateTime @default(now()) /// 생성 시각
+  updated_at DateTime @updatedAt /// 수정 시각
+
+  // Relations
+  journal Journal @relation(fields: [journal_id], references: [id])
+  account_risk_managements AccountRiskManagement[]
+
+  @@index([created_at])
+}
+
+/// AccountRiskManagement - 계좌별 통합 리스크 관리
+/// 특정 계좌에 적용된 리스크 정책들의 통합 관리를 담당하는 모델
+model AccountRiskManagement {
+  id Int @id @default(autoincrement())
+  portfolio_risk_management_id Int /// PortfolioRiskManagement 참조
+  risk_management_policy_id Int /// RiskManagementPolicy 참조
+  account_id Int /// Account 참조
+  created_at DateTime @default(now()) /// 생성 시각
+  updated_at DateTime @updatedAt /// 수정 시각
+
+  // Relations
+  portfolio_risk_management PortfolioRiskManagement @relation(fields: [portfolio_risk_management_id], references: [id])
+  account Account @relation(fields: [account_id], references: [id])
+  risk_management_policy RiskManagementPolicy @relation(fields: [risk_management_policy_id], references: [id])
+
+  @@index([portfolio_risk_management_id])
+  @@index([account_id])
+  @@index([risk_management_policy_id])
+}
+
+/// PrincipleDefinition - 트레이딩 원칙 정의
+/// 사용자의 사고 판단 기준을 정의하는 모델
+model PrincipleDefinition {
+  id Int @id @default(autoincrement())
+  preference_id Int /// Preference 참조
+  evaluation_criteria String @default("") /// 평가 기준
+
+  // Relations
+  preference Preference @relation(fields: [preference_id], references: [id])
+  principle_evaluations PrincipleEvaluation[]
+
+  @@index([preference_id])
+}
+
+/// PrincipleEvaluation - 원칙 평가 기록
+/// Journal에 대한 특정 원칙의 평가 기록을 관리하는 모델
+model PrincipleEvaluation {
+  id Int @id @default(autoincrement())
+  journal_id Int @unique /// Journal 참조
+  principle_definition_id Int /// PrincipleDefinition 참조
+  score ScoreType /// 평가 점수
+  score_reason String @default("") /// 점수 이유
+
+  // Relations
+  journal Journal @relation(fields: [journal_id], references: [id])
+  principle_definition PrincipleDefinition @relation(fields: [principle_definition_id], references: [id])
+
+  @@index([principle_definition_id])
+  @@index([score])
+} 

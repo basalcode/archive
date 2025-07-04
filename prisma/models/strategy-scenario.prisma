@@ -1,0 +1,140 @@
+/// ========================================
+/// TRADING STRATEGY & SCENARIO MODELS
+/// ========================================
+
+/// StrategyDefinition - 전략 정의
+/// 사용자가 정의한 트레이딩 전략의 기본 정보를 관리하는 모델
+model StrategyDefinition {
+  id Int @id @default(autoincrement())
+  preference_id Int /// Preference 참조
+  method_id Int /// StrategyMethod 참조
+  score ScoreType /// 평가 점수
+  score_reason String @default("") /// 점수 이유
+
+  // Relations
+  preference Preference @relation(fields: [preference_id], references: [id])
+  method StrategyMethod @relation(fields: [method_id], references: [id])
+  strategy_observations StrategyObservation[]
+
+  @@index([preference_id])
+  @@index([method_id])
+  @@index([score])
+}
+
+/// StrategyObservation - 전략 관찰 기록
+/// 실제 시장에서 관찰된 전략 실행 가능성 기록을 관리하는 모델
+model StrategyObservation {
+  id Int @id @default(autoincrement())
+  journal_id Int @unique /// Journal 참조
+  strategy_definition_id Int /// StrategyDefinition 참조
+  bias StrategyBiasType /// 전략 유형
+  symbol_id Int /// Symbol 참조
+  interval TimeIntervalType /// 시간 단위
+  market_trend MarketTrendType /// 시장 추세
+  min_liquidity_price String /// 하단 매물대 (가격 관련)
+  max_liquidity_price String /// 상단 매물대 (가격 관련)
+
+  // Relations
+  strategy_definition StrategyDefinition @relation(fields: [strategy_definition_id], references: [id])
+  journal Journal @relation(fields: [journal_id], references: [id])
+  symbol Symbol @relation(fields: [symbol_id], references: [id])
+  entry_scenario_strategy_observations EntryScenarioStrategyObservation[]
+  exit_scenario_strategy_observations ExitScenarioStrategyObservation[]
+
+  @@index([strategy_definition_id])
+  @@index([symbol_id])
+  @@index([interval])
+}
+
+/// Scenario - 시나리오 그룹
+/// 복합 전략을 구성하는 여러 시나리오들의 집합을 관리하는 모델
+/// 양방향 전략, 스케일링 전략 등을 하나의 그룹으로 관리
+model Scenario {
+  id Int @id @default(autoincrement())
+  journal_id Int @unique /// Journal 참조
+  symbol_id Int /// Symbol 참조
+  confidence_score ScoreType /// 자신감 점수
+  validity_score ScoreType /// 적합성 점수
+  is_valid Boolean @default(true) /// 유효성 여부
+
+  // Relations
+  journal Journal @relation(fields: [journal_id], references: [id])
+  symbol Symbol @relation(fields: [symbol_id], references: [id])
+  entry_scenarios EntryScenario[] /// 1:N 관계 - 여러 시나리오 포함
+
+  @@index([is_valid])
+}
+
+/// EntryScenario - 진입 시나리오
+/// 포지션 진입 시 고려한 전략과 가격 조건을 관리하는 모델
+model EntryScenario {
+  id Int @id @default(autoincrement())
+  scenario_group_id Int /// Scenario 참조
+  strategy_bias_type StrategyBiasType /// 전략 유형
+  time_frame TradeTimeFrameType /// 시간 프레임
+  direction PositionDirectionType /// 포지션 방향 (진입 시나리오의 경우)
+  target_entry_price String /// 목표 진입 가격
+  max_stop_loss_price String /// 최대 손절 가격
+  min_take_profit_price String /// 최소 익절 가격
+  first_take_profit_weight Decimal @db.Decimal(5,4) /// 첫 익절 비중 (비중 관련)
+  min_risk_reward_weight Decimal @db.Decimal(5,4) /// 최소 손익비 (비중 관련)
+  max_invalidation_price String /// 상단 폐기 기준
+  min_invalidation_price String /// 하단 폐기 기준
+  is_active Boolean @default(true) /// 활성 상태
+
+  // Relations
+  open_orders OpenOrder[]
+  scenario_group Scenario @relation(fields: [scenario_group_id], references: [id])
+  exit_scenario ExitScenario[]
+  entry_scenario_strategy_observations EntryScenarioStrategyObservation[]
+
+  @@index([is_active])
+  @@index([scenario_group_id])
+}
+
+/// ExitScenario - 청산 시나리오
+/// 포지션 청산 조건과 기준 가격을 관리하는 모델
+model ExitScenario {
+  id Int @id @default(autoincrement())
+  entry_scenario_id Int /// EntryScenario 참조
+  strategy_bias_type StrategyBiasType /// 전략 유형
+  stop_loss_price String /// 손절 기준 가격
+  stop_loss_weight Decimal @db.Decimal(5,4) /// 손절 비중 (비중 관련)
+  take_profit_price String /// 익절 기준 가격
+  take_profit_weight Decimal @db.Decimal(5,4) /// 익절 비중 (비중 관련)
+
+  // Relations
+  close_orders CloseOrder[]
+  exit_scenario_strategy_observations ExitScenarioStrategyObservation[]
+  entry_scenario EntryScenario @relation(fields: [entry_scenario_id], references: [id])
+}
+
+/// EntryScenarioStrategyObservation - 진입 시나리오-전략 관찰 연결
+/// 진입 시나리오와 전략 관찰의 연결을 관리하는 모델
+model EntryScenarioStrategyObservation {
+  id Int @id @default(autoincrement())
+  entry_scenario_id Int /// EntryScenario 참조
+  strategy_observation_id Int /// StrategyObservation 참조
+  created_at DateTime @default(now()) /// 생성 시각
+
+  // Relations
+  entry_scenario EntryScenario @relation(fields: [entry_scenario_id], references: [id])
+  strategy_observation StrategyObservation @relation(fields: [strategy_observation_id], references: [id])
+
+  @@index([created_at])
+}
+
+/// ExitScenarioStrategyObservation - 청산 시나리오-전략 관찰 연결
+/// 청산 시나리오와 전략 관찰의 연결을 관리하는 모델
+model ExitScenarioStrategyObservation {
+  id Int @id @default(autoincrement())
+  exit_scenario_id Int /// ExitScenario 참조
+  strategy_observation_id Int /// StrategyObservation 참조
+  created_at DateTime @default(now()) /// 생성 시각
+
+  // Relations
+  exit_scenario ExitScenario @relation(fields: [exit_scenario_id], references: [id])
+  strategy_observation StrategyObservation @relation(fields: [strategy_observation_id], references: [id])
+
+  @@index([created_at])
+} 
