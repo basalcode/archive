@@ -39,21 +39,3 @@ model StrategyMethod {
   @@index([created_at])
   @@index([deactivated_at])
 }
-
-/// Indicator - 시장 지표
-/// 시장 분석에 사용되는 지표 정보를 관리하는 모델
-model Indicator {
-  id Int @id @default(autoincrement())
-  name String @unique /// 지표명
-  full_name String @unique /// 전체 이름
-  description String @default("") /// 설명
-  created_at DateTime @default(now()) /// 생성 시각
-  updated_at DateTime @updatedAt /// 수정 시각
-  deactivated_at DateTime? /// 비활성화 시각
-
-  // Relations
-  // 향후 필요시 구조화된 지표 데이터 연결 가능
-
-  @@index([created_at])
-  @@index([deactivated_at])
-} 

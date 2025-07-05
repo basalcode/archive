@@ -85,8 +85,8 @@ model Order {
 model OpenOrder {
   id Int @id @default(autoincrement())
   order_id Int? @unique /// Order 참조
-  position_id Int @unique /// Position 참조
   trade_id Int /// Trade 참조
+  position_id Int @unique /// Position 참조
   unclosed_quantity String /// 미결제 수량
   entry_scenario_id Int /// EntryScenario 참조
 
@@ -105,8 +105,8 @@ model OpenOrder {
 model CloseOrder {
   id Int @id @default(autoincrement())
   order_id Int @unique /// Order 참조
-  position_id Int /// Position 참조
   trade_id Int /// Trade 참조
+  position_id Int /// Position 참조
   pnl String /// 실현 손익
   realized_return_rate Decimal @db.Decimal(5,4) /// 수익률 (비중 관련)
   exit_scenario_id Int /// ExitScenario 참조
